@@ -1,39 +1,34 @@
 (function () {
-  // Alleen uitvoeren op productpagina’s
-  var isProductPage =
-    /\/(product|shop)\/?/i.test(location.pathname) ||
-    document.querySelector('button, a')?.textContent?.match(/Place in basket|In winkelmand|Toevoegen/i);
+  // Alleen uitvoeren op productpagina's
+  if (!/\/Catalog\/Product\//i.test(location.pathname)) return;
 
-  if (!isProductPage) return;
+  function hideByFiltersHeading() {
+    // Zoek exacte titel "Filters"
+    var nodes = Array.from(document.querySelectorAll('h1,h2,h3,h4,h5,div,span,strong'));
+    var title = nodes.find(n => (n.textContent || '').trim().toLowerCase() === 'filters');
+    if (!title) return false;
 
-  var filterSelectors = [
-    '.filters',
-    '#filters',
-    '[data-testid="filters"]',
-    '.sidebar',
-    '.left-column',
-    '.search-panel'
-  ];
+    // Pak een logische container omhoog (pas volgorde evt aan)
+    var container =
+      title.closest('.panel') ||
+      title.closest('.card') ||
+      title.closest('[class*="col-"]') ||  // bootstrap kolom
+      title.closest('section') ||
+      title.closest('aside') ||
+      title.closest('div');
 
-  function injectCSS() {
-    if (document.getElementById('hide-catalog-filters-css')) return;
+    if (!container) return false;
 
-    var style = document.createElement('style');
-    style.id = 'hide-catalog-filters-css';
-    style.textContent = `
-      ${filterSelectors.join(', ')} { display:none !important; }
-      .content, .main, .product-detail, .right-column {
-        width:100% !important;
-        max-width:100% !important;
-      }
-    `;
-    document.head.appendChild(style);
+    container.style.setProperty('display', 'none', 'important');
+    return true;
   }
 
-  injectCSS();
+  // Probeer direct
+  hideByFiltersHeading();
 
+  // En blijf kijken (SPA/async rendering)
   var obs = new MutationObserver(function () {
-    injectCSS();
+    hideByFiltersHeading();
   });
 
   obs.observe(document.documentElement, { childList: true, subtree: true });
